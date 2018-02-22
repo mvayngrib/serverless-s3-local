@@ -5,7 +5,8 @@ const shell = require('shelljs');
 const defaultOptions = {
   port: 4569,
   host: 'localhost',
-  cors: false
+  cors: false,
+  create: true
 }
 
 class ServerlessS3Local {
@@ -46,6 +47,11 @@ class ServerlessS3Local {
                 default: false,
                 usage: 'Do not start S3 local (in case it is already running)',
               },
+              create: {
+                shortcut: 'x',
+                default: true,
+                usage: 'Don\'t create buckets'
+              }
             },
           },
           create: {
@@ -95,9 +101,13 @@ class ServerlessS3Local {
   startHandler() {
     return new Promise((resolve, reject) => {
       this._setOptions();
-      const { noStart, port, host, cors } = this.options;
+      const { noStart, create, port, host, cors } = this.options;
       if (noStart) {
-        return this.createBuckets().then(resolve, reject);
+        if (create) {
+          return this.createBuckets().then(resolve, reject);
+        }
+
+        return resolve();
       }
 
       const dirPath = this.options.directory || './buckets';
@@ -120,7 +130,9 @@ class ServerlessS3Local {
         this.options.port = s3Port
         console.log(`S3 local started ( port:${s3Port} )`);
 
-        this.createBuckets().then(resolve, reject);
+        if (create) {
+          this.createBuckets().then(resolve, reject);
+        }
       });
     });
   }
